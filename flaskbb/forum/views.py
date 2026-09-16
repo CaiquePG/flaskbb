@@ -803,6 +803,13 @@ class DeleteTopic(MethodView):
         return redirect(url_for("forum.view_forum", forum_id=topic.forum_id))
 
 
+def set_topic_locked(topic_id: int, locked: bool):
+    topic = first_or_404(db.select(Topic).where(Topic.id == topic_id), True)
+    topic.locked = locked
+    topic.save()
+    return redirect(topic.url)
+
+
 class LockTopic(MethodView):
     decorators = [
         login_required,
@@ -818,10 +825,7 @@ class LockTopic(MethodView):
     ]
 
     def post(self, topic_id: int, slug: str | None = None):
-        topic = first_or_404(db.select(Topic).where(Topic.id == topic_id), True)
-        topic.locked = True
-        topic.save()
-        return redirect(topic.url)
+        return set_topic_locked(topic_id, True)
 
 
 class UnlockTopic(MethodView):
@@ -839,10 +843,7 @@ class UnlockTopic(MethodView):
     ]
 
     def post(self, topic_id: int, slug: str | None = None):
-        topic = first_or_404(db.select(Topic).where(Topic.id == topic_id), True)
-        topic.locked = False
-        topic.save()
-        return redirect(topic.url)
+        return set_topic_locked(topic_id, False)
 
 
 class HighlightTopic(MethodView):
