@@ -209,3 +209,25 @@ def test_trivialize_topic_remove_destaque_e_salva(application):
             topic.save.assert_called_once()
             assert resultado.status_code == 302
             assert resultado.location.endswith("/topic/1")
+
+@pytest.mark.parametrize(
+    "sort_by, order_by, expected_sort",
+    [
+        ("reg_date", "asc", "id"),
+        ("post_count", "desc", "post_count"),
+        ("username", "asc", "username"),
+    ],
+)
+def test_member_list_opcoes_ordenacao(
+    application, sort_by, order_by, expected_sort
+):
+    from flaskbb.forum.views import MemberList
+
+    with application.test_request_context(
+        f"/memberlist?sort_by={sort_by}&order_by={order_by}&page=2"
+    ):
+        page, order_func, sort_obj = MemberList().get_sorting_options()
+
+        assert page == 2
+        assert order_func.__name__ == order_by
+        assert sort_obj.key == expected_sort

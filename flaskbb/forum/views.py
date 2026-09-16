@@ -649,15 +649,12 @@ class ReportView(MethodView):
 class MemberList(MethodView):
     form = UserSearchForm
 
-    def get(self):
+    def get_sorting_options(self):
         page = request.args.get("page", 1, type=int)
         sort_by = request.args.get("sort_by", "reg_date")
         order_by = request.args.get("order_by", "asc")
 
-        if order_by == "asc":
-            order_func = asc
-        else:
-            order_func = desc
+        order_func = asc if order_by == "asc" else desc
 
         if sort_by == "reg_date":
             sort_obj = User.id
@@ -665,6 +662,11 @@ class MemberList(MethodView):
             sort_obj = User.post_count
         else:
             sort_obj = User.username
+
+        return page, order_func, sort_obj
+
+    def get(self):
+        page, order_func, sort_obj = self.get_sorting_options()
 
         users = db.paginate(
             db.select(User).order_by(order_func(sort_obj)),
@@ -677,26 +679,14 @@ class MemberList(MethodView):
         )
 
     def post(self):
-        page = request.args.get("page", 1, type=int)
-        sort_by = request.args.get("sort_by", "reg_date")
-        order_by = request.args.get("order_by", "asc")
-
-        if order_by == "asc":
-            order_func = asc
-        else:
-            order_func = desc
-
-        if sort_by == "reg_date":
-            sort_obj = User.id
-        elif sort_by == "post_count":
-            sort_obj = User.post_count
-        else:
-            sort_obj = User.username
+        page, order_func, sort_obj = self.get_sorting_options()
 
         form = self.form()
         if form.validate():
             users = form.get_results().paginate(
-                page=page, per_page=flaskbb_config["USERS_PER_PAGE"], error_out=False
+                page=page,
+                per_page=flaskbb_config["USERS_PER_PAGE"],
+                error_out=False,
             )
             return render_template(
                 "forum/memberlist.html", users=users, search_form=form
@@ -708,8 +698,9 @@ class MemberList(MethodView):
             per_page=flaskbb_config["USERS_PER_PAGE"],
             error_out=False,
         )
-        return render_template("forum/memberlist.html", users=users, search_form=form)
-
+        return render_template(
+            "forum/memberlist.html", users=users, search_form=form
+        )
 
 class TopicTracker(MethodView):
     decorators = [login_required]
