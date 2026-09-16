@@ -1137,21 +1137,22 @@ class UnhidePost(MethodView):
 
 
 class MarkdownPreview(MethodView):
+    def get_render_classes(self, mode: str | None = None):
+        if mode == "nonpost":
+            return pluggy.hook.flaskbb_load_nonpost_markdown_class(
+                app=current_app
+            )
+
+        return pluggy.hook.flaskbb_load_post_markdown_class(
+            app=current_app
+        )
+
     def post(self, mode: str | None = None):
         text = request.data.decode("utf-8")
-
-        if mode == "nonpost":
-            render_classes = pluggy.hook.flaskbb_load_nonpost_markdown_class(
-                app=current_app
-            )
-        else:
-            render_classes = pluggy.hook.flaskbb_load_post_markdown_class(
-                app=current_app
-            )
-
+        render_classes = self.get_render_classes(mode)
         renderer = make_renderer(render_classes)
-        preview = renderer(text)
-        return preview
+
+        return renderer(text)
 
 
 @impl(tryfirst=True)
