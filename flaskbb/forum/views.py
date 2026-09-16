@@ -846,6 +846,13 @@ class UnlockTopic(MethodView):
         return set_topic_locked(topic_id, False)
 
 
+def set_topic_important(topic_id: int, important: bool):
+    topic = first_or_404(db.select(Topic).where(Topic.id == topic_id), True)
+    topic.important = important
+    topic.save()
+    return redirect(topic.url)
+
+
 class HighlightTopic(MethodView):
     decorators = [
         login_required,
@@ -861,10 +868,7 @@ class HighlightTopic(MethodView):
     ]
 
     def post(self, topic_id: int, slug: str | None = None):
-        topic = first_or_404(db.select(Topic).where(Topic.id == topic_id), True)
-        topic.important = True
-        topic.save()
-        return redirect(topic.url)
+        return set_topic_important(topic_id, True)
 
 
 class TrivializeTopic(MethodView):
@@ -882,10 +886,7 @@ class TrivializeTopic(MethodView):
     ]
 
     def post(self, topic_id: int | None = None, slug: str | None = None):
-        topic = first_or_404(db.select(Topic).where(Topic.id == topic_id), True)
-        topic.important = False
-        topic.save()
-        return redirect(topic.url)
+        return set_topic_important(topic_id, False)
 
 
 class DeletePost(MethodView):

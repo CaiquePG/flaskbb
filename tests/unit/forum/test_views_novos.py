@@ -173,3 +173,39 @@ def test_raw_post_formata_conteudo(application):
                 content="conteudo_teste",
             )
             assert resultado == "conteudo_formatado"
+def test_highlight_topic_destaca_e_salva(application):
+    from flaskbb.forum.views import HighlightTopic
+
+    topic = Mock()
+    topic.url = "/topic/1"
+
+    with application.test_request_context("/topic/1/highlight", method="POST"):
+        with patch(
+            "flaskbb.forum.views.first_or_404",
+            return_value=topic,
+        ):
+            resultado = HighlightTopic().post(1)
+
+            assert topic.important is True
+            topic.save.assert_called_once()
+            assert resultado.status_code == 302
+            assert resultado.location.endswith("/topic/1")
+
+
+def test_trivialize_topic_remove_destaque_e_salva(application):
+    from flaskbb.forum.views import TrivializeTopic
+
+    topic = Mock()
+    topic.url = "/topic/1"
+
+    with application.test_request_context("/topic/1/trivialize", method="POST"):
+        with patch(
+            "flaskbb.forum.views.first_or_404",
+            return_value=topic,
+        ):
+            resultado = TrivializeTopic().post(1)
+
+            assert topic.important is False
+            topic.save.assert_called_once()
+            assert resultado.status_code == 302
+            assert resultado.location.endswith("/topic/1")
