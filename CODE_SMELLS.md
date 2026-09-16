@@ -2,32 +2,44 @@
 
 ## Arquivo analisado
 
-O arquivo selecionado para análise foi `flaskbb/forum/views.py`. Ele concentra diversas funcionalidades relacionadas ao fórum, incluindo visualização de fóruns e tópicos, criação e edição de conteúdo, pesquisa e operações de moderação.
+O arquivo selecionado para análise foi `flaskbb/forum/views.py`. Ele concentra diversas funcionalidades relacionadas ao fórum, incluindo visualização de fóruns e tópicos, criação e edição de conteúdo, pesquisa, listagem de membros e operações de moderação.
 
 A análise busca identificar estruturas que dificultam a leitura, manutenção ou evolução do código, sem considerar necessariamente esses pontos como erros de funcionamento.
 
 ## Code Smells identificados
 
-### 1. Large Class
+### 1. Large Module
 
-O arquivo `views.py` concentra um grande número de classes responsáveis por diferentes operações do fórum. Embora cada view possua uma responsabilidade específica, a concentração de muitas funcionalidades em um único módulo aumenta seu tamanho e dificulta a localização e manutenção das funcionalidades.
+O arquivo `views.py` concentra um grande número de classes e funcionalidades relacionadas a diferentes operações do fórum. Embora as views possuam responsabilidades individuais, a concentração de visualização, pesquisa, moderação, membros e outras operações em um único módulo aumenta seu tamanho e dificulta a localização e manutenção das funcionalidades.
 
 ### 2. Long Method
 
-Algumas views possuem métodos com diversas etapas e responsabilidades dentro do mesmo fluxo. Isso pode dificultar a compreensão do comportamento e tornar alterações futuras mais arriscadas.
+Alguns métodos concentram várias etapas de processamento. Um exemplo é o método `post` da classe `ManageForum`, que trata diferentes operações de moderação e possui diversos caminhos de execução. Métodos extensos aumentam a quantidade de informações que precisam ser compreendidas simultaneamente durante uma manutenção.
 
 ### 3. Duplicate Code
 
-Existem operações com estruturas muito semelhantes. As ações de bloquear e desbloquear tópicos, por exemplo, recuperam um tópico, alteram um atributo, salvam o objeto e realizam um redirecionamento. A duplicação aumenta a quantidade de código que precisa ser mantida.
+Foram identificados diferentes trechos com estruturas semelhantes. As operações de bloquear e desbloquear tópicos, assim como destacar e remover destaque, repetiam etapas como localizar o tópico, alterar seu estado, salvar o objeto e redirecionar o usuário.
+
+Também havia repetição da lógica de paginação e ordenação entre os métodos `get` e `post` de `MemberList`.
 
 ### 4. Conditional Complexity
 
-Algumas views apresentam diferentes caminhos de execução controlados por condições. Conforme novas regras são adicionadas, essas estruturas condicionais podem aumentar a complexidade e dificultar a leitura do fluxo principal.
+O método `post` de `ManageForum` apresenta diversos caminhos condicionais para decidir qual operação de moderação deve ser executada. À medida que novas operações forem adicionadas, essa estrutura pode crescer e dificultar a compreensão do fluxo e a realização de alterações.
 
-### 5. Long Parameter List
+### 5. Mixed Responsibilities
 
-Algumas operações recebem diversos parâmetros relacionados ao contexto da requisição ou aos objetos manipulados. Uma quantidade elevada de parâmetros aumenta o acoplamento e pode dificultar a utilização e manutenção dos métodos.
+Algumas classes e métodos acumulam mais de uma etapa ou responsabilidade dentro do mesmo fluxo. `MarkdownPreview.post`, por exemplo, realizava tanto a escolha das classes utilizadas na renderização quanto a própria preparação e execução da renderização do conteúdo.
 
-### 6. Feature Envy
+A separação dessas responsabilidades pode tornar o fluxo principal mais simples e facilitar testes e futuras alterações.
 
-Determinadas views realizam operações que dependem fortemente do estado e do comportamento de outros objetos do domínio. Esse tipo de situação pode indicar que parte da lógica está localizada na camada de apresentação quando poderia estar mais próxima do objeto responsável pelo comportamento.
+### 6. Repeated Request Processing
+
+Algumas operações realizam repetidamente o processamento de parâmetros recebidos pela requisição. Em `MemberList`, por exemplo, os métodos `get` e `post` repetiam a leitura e interpretação de parâmetros relacionados à página e à ordenação dos usuários.
+
+Centralizar esse processamento reduz duplicações e evita que alterações futuras precisem ser feitas em múltiplos pontos.
+
+## Pontos selecionados para refatoração
+
+Entre os problemas identificados, foram priorizados os pontos relacionados à duplicação de código, métodos com múltiplas etapas, responsabilidades misturadas e processamento repetido de parâmetros.
+
+As alterações foram realizadas de forma incremental e registradas em commits separados, permitindo validar o comportamento do sistema após cada refatoração.
